@@ -5,7 +5,8 @@ from sqlalchemy import (
     ForeignKey, Text, Date, CheckConstraint, UniqueConstraint
 )
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import TIMESTAMP as TIMESTAMPTZ
+from sqlalchemy import TIMESTAMP
+TIMESTAMPTZ = TIMESTAMP(timezone=True)
 from sqlalchemy.orm import relationship
 from config import Base
 
