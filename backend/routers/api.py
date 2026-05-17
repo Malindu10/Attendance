@@ -19,7 +19,7 @@ from models import (
     Session as DBSession, Attendance, ScanLog, RekognitionUsage
 )
 from services.auth import (
-    hash_pin, verify_pin, create_token,
+    hash_pin, create_token,
     get_current_coach, require_admin
 )
 from services.rekognition import (
@@ -38,24 +38,14 @@ router = APIRouter()
 # AUTH
 # ══════════════════════════════════════════════════════════
 
-class LoginRequest(BaseModel):
-    email: str
-    pin: str   # 4–6 digit PIN
-
 @router.post("/auth/login")
-async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
+async def login(db: AsyncSession = Depends(get_db)):
     result = await db.execute(
-        select(Coach).where(Coach.email == body.email, Coach.is_active == True)
+        select(Coach).where(Coach.is_active == True).limit(1)
     )
     coach = result.scalar_one_or_none()
-    if not coach or not verify_pin(body.pin, coach.pin_hash):
-        raise HTTPException(status_code=401, detail="Invalid email or PIN.")
-
-    await db.execute(
-        update(Coach).where(Coach.id == coach.id)
-        .values(last_login=datetime.now(timezone.utc))
-    )
-    await db.commit()
+    if not coach:
+        raise HTTPException(status_code=503, detail="No coach account configured.")
     return {
         "token": create_token(str(coach.id), coach.role),
         "coach": {"id": str(coach.id), "name": coach.name, "role": coach.role},
