@@ -32,6 +32,10 @@ from middleware.limits import (
 
 router = APIRouter()
 
+async def get_db():
+    """Placeholder — overridden by main.py dependency_overrides."""
+    raise RuntimeError("get_db not overridden")
+
 
 # ══════════════════════════════════════════════════════════
 # AUTH
@@ -67,7 +71,7 @@ async def login(body: LoginRequest, db: AsyncSession = Depends()):
 
 @router.get("/setup")
 async def get_setup(
-    db: AsyncSession = Depends(),
+    db: AsyncSession = Depends(get_db),
     coach: Coach = Depends(get_current_coach),
 ):
     """Returns all age groups and locations for the session setup screen."""
