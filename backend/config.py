@@ -33,8 +33,9 @@ def get_settings() -> Settings:
 # ── Database ──────────────────────────────────────────────
 def get_engine():
     s = get_settings()
+    db_url = s.database_url.replace("postgresql://", "postgresql+asyncpg://")
     return create_async_engine(
-        s.database_url,
+        db_url,
         pool_size=10,
         max_overflow=20,
         echo=(s.environment == "development"),
