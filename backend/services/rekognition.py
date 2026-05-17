@@ -27,12 +27,15 @@ def _s3():
 
 def ensure_collection_exists() -> None:
     """Create the Rekognition face collection if it doesn't exist yet."""
+    import logging
     rek = _rekognition()
     try:
         rek.create_collection(CollectionId=settings.aws_rekognition_collection)
     except ClientError as e:
         if e.response["Error"]["Code"] != "ResourceAlreadyExistsException":
             raise
+    except Exception as e:
+        logging.warning(f"Could not verify Rekognition collection at startup: {e}")
 
 
 def upload_photo_to_s3(image_bytes: bytes, s3_key: str) -> str:

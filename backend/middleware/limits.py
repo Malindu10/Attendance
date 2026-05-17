@@ -140,14 +140,6 @@ async def increment_rekognition_usage(db: AsyncSession) -> None:
         """),
         {"mk": month_key},
     )
-    await db.execute(
-        text("""
-            UPDATE sessions
-            SET scan_count = scan_count + 1
-            WHERE id = :sid
-        """),
-        # session_id passed separately by caller via update_session_scan_count()
-    )
 
 
 async def update_session_scan_count(session_id: str, db: AsyncSession) -> None:

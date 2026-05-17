@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, func
 from sqlalchemy.orm import selectinload
 
+from config import get_db
 from models import (
     Coach, AgeGroup, Location, Student,
     Session as DBSession, Attendance, ScanLog, RekognitionUsage
@@ -32,10 +33,6 @@ from middleware.limits import (
 
 router = APIRouter()
 
-async def get_db():
-    """Placeholder — overridden by main.py dependency_overrides."""
-    raise RuntimeError("get_db not overridden")
-
 
 # ══════════════════════════════════════════════════════════
 # AUTH
@@ -46,7 +43,7 @@ class LoginRequest(BaseModel):
     pin: str   # 4–6 digit PIN
 
 @router.post("/auth/login")
-async def login(body: LoginRequest, db: AsyncSession = Depends()):
+async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(Coach).where(Coach.email == body.email, Coach.is_active == True)
     )
@@ -100,7 +97,7 @@ class StudentCreate(BaseModel):
 @router.get("/students")
 async def list_students(
     age_group_id: Optional[str] = None,
-    db: AsyncSession = Depends(),
+    db: AsyncSession = Depends(get_db),
     coach: Coach = Depends(get_current_coach),
 ):
     q = select(Student).where(Student.is_active == True)
@@ -113,7 +110,7 @@ async def list_students(
 @router.post("/students")
 async def create_student(
     body: StudentCreate,
-    db: AsyncSession = Depends(),
+    db: AsyncSession = Depends(get_db),
     admin: Coach = Depends(require_admin),
 ):
     s = Student(
@@ -132,7 +129,7 @@ async def create_student(
 async def register_student_photo(
     student_id: str,
     file: UploadFile = File(...),
-    db: AsyncSession = Depends(),
+    db: AsyncSession = Depends(get_db),
     admin: Coach = Depends(require_admin),
 ):
     """
@@ -190,7 +187,7 @@ class SessionCreate(BaseModel):
 @router.post("/sessions")
 async def start_session(
     body: SessionCreate,
-    db: AsyncSession = Depends(),
+    db: AsyncSession = Depends(get_db),
     coach: Coach = Depends(get_current_coach),
 ):
     # Check coach doesn't already have an open session
@@ -234,7 +231,7 @@ async def start_session(
 @router.post("/sessions/{session_id}/close")
 async def close_session(
     session_id: str,
-    db: AsyncSession = Depends(),
+    db: AsyncSession = Depends(get_db),
     coach: Coach = Depends(get_current_coach),
 ):
     await db.execute(
@@ -248,7 +245,7 @@ async def close_session(
 @router.get("/sessions/{session_id}/register")
 async def get_register(
     session_id: str,
-    db: AsyncSession = Depends(),
+    db: AsyncSession = Depends(get_db),
     coach: Coach = Depends(get_current_coach),
 ):
     """Full register for a session: expected squad + who is marked present."""
@@ -291,7 +288,7 @@ async def scan_face(
     session_id: str,
     request: Request,
     file: UploadFile = File(...),
-    db: AsyncSession = Depends(),
+    db: AsyncSession = Depends(get_db),
     coach: Coach = Depends(get_current_coach),
 ):
     """
@@ -393,7 +390,7 @@ class ConfirmBody(BaseModel):
 async def confirm_attendance(
     session_id: str,
     body: ConfirmBody,
-    db: AsyncSession = Depends(),
+    db: AsyncSession = Depends(get_db),
     coach: Coach = Depends(get_current_coach),
 ):
     # Prevent duplicate
@@ -433,7 +430,7 @@ async def confirm_attendance(
 async def manual_attendance(
     session_id: str,
     body: ConfirmBody,
-    db: AsyncSession = Depends(),
+    db: AsyncSession = Depends(get_db),
     coach: Coach = Depends(get_current_coach),
 ):
     """Mark a student present manually (Register tab toggle)."""
@@ -463,7 +460,7 @@ async def manual_attendance(
 @router.post("/sessions/{session_id}/guest")
 async def mark_guest(
     session_id: str,
-    db: AsyncSession = Depends(),
+    db: AsyncSession = Depends(get_db),
     coach: Coach = Depends(get_current_coach),
 ):
     label = f"Guest #{uuid.uuid4().hex[:4].upper()}"
@@ -485,7 +482,7 @@ async def mark_guest(
 
 @router.get("/usage")
 async def get_usage(
-    db: AsyncSession = Depends(),
+    db: AsyncSession = Depends(get_db),
     admin: Coach = Depends(require_admin),
 ):
     """Admin only — current month's Rekognition usage vs limits."""

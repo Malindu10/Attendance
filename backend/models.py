@@ -4,9 +4,11 @@ from sqlalchemy import (
     Column, String, Boolean, Integer, Numeric,
     ForeignKey, Text, Date, CheckConstraint, UniqueConstraint
 )
-from sqlalchemy.dialects.postgresql import UUID, TIMESTAMPTZ
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import TIMESTAMP as TIMESTAMPTZ
 from sqlalchemy.orm import relationship
 from config import Base
+
 
 def gen_uuid():
     return str(uuid.uuid4())

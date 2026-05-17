@@ -9,7 +9,7 @@ from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from config import get_settings
+from config import get_settings, get_db
 from models import Coach
 
 settings = get_settings()
@@ -33,7 +33,7 @@ def create_token(coach_id: str, role: str) -> str:
 
 async def get_current_coach(
     creds: HTTPAuthorizationCredentials = Depends(bearer),
-    db: AsyncSession = Depends(lambda: None),  # injected in main
+    db: AsyncSession = Depends(get_db),
 ) -> Coach:
     try:
         payload = jwt.decode(creds.credentials, settings.jwt_secret, algorithms=["HS256"])
